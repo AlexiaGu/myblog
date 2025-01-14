@@ -1,6 +1,6 @@
 package org.wildcodeschool.myblog.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,6 +40,44 @@ public class ArticleController {
         return ResponseEntity.ok(article);
     }
 
+    @GetMapping("/search-title")
+    public ResponseEntity<List<Article>> getArticlesByTitle(@RequestParam String searchTerms) {
+        List<Article> articles = articleRepository.findByTitle(searchTerms);
+        if (articles.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(articles);
+    }
+
+//    méthode qui retourne une liste d'articles dont le contenu contient une chaine de caractère fournie en paramètre,
+    @GetMapping("/search-content")
+    public ResponseEntity<List<Article>> getArticlesByContent(@RequestParam String keywords) {
+        List<Article> articles = articleRepository.findByContentContaining(keywords);
+        if (articles.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(articles);
+    }
+// méthode qui retourne une liste d'articles créée après une date fournie en paramètre
+    @GetMapping("/search-date")
+    public ResponseEntity<List<Article>> getArticlesCreateAfter(@RequestParam LocalDateTime searchDate) {
+            List<Article> articles = articleRepository.findByCreatedAtAfter(searchDate);
+            if (articles.isEmpty()) {
+                return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(articles);
+    }
+
+    // une méthode qui retourne les 5 derniers articles créés et classés du plus récent au plus ancien.
+    @GetMapping("/search-last-article")
+    public ResponseEntity<List<Article>> getFiveLastArticles() {
+        List<Article> articles = articleRepository.findTopFiveByOrderByCreatedAtDesc();
+        if (articles.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(articles);
+    }
+
     @PostMapping
     public ResponseEntity<Article> createArticle(@RequestBody Article article) {
         article.setCreatedAt(LocalDateTime.now());
@@ -75,4 +113,6 @@ public class ArticleController {
         articleRepository.delete(article);
         return ResponseEntity.noContent().build();
     }
+
+
 }

@@ -1,9 +1,9 @@
 package org.wildcodeschool.myblog.controller;
 
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.wildcodeschool.myblog.dto.ArticleDTO;
 import org.wildcodeschool.myblog.model.Article;
 import org.wildcodeschool.myblog.model.Category;
 import org.wildcodeschool.myblog.repository.ArticleRepository;
@@ -11,6 +11,7 @@ import org.wildcodeschool.myblog.repository.CategoryRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/articles")
@@ -18,6 +19,18 @@ public class ArticleController {
 
     private final ArticleRepository articleRepository;
     private final CategoryRepository categoryRepository;
+
+    private ArticleDTO convertToDTO(Article article) {
+        ArticleDTO articleDTO = new ArticleDTO();
+        articleDTO.setId(article.getId());
+        articleDTO.setTitle(article.getTitle());
+        articleDTO.setContent(article.getContent());
+        articleDTO.setUpdatedAt(article.getUpdatedAt());
+        if (article.getCategory() != null) {
+            articleDTO.setCategoryName(article.getCategory().getName());
+        }
+        return articleDTO;
+    }
 
     public ArticleController(
             ArticleRepository articleRepository,
@@ -28,23 +41,24 @@ public class ArticleController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Article>> getAllArticles() {
+    public ResponseEntity<List<ArticleDTO>> getAllArticles() {
         List<Article> articles = articleRepository.findAll();
         if (articles.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-        return ResponseEntity.ok(articles);
+        List<ArticleDTO> articleDTOs = articles.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(articleDTOs);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Article> getArticleById(@PathVariable Long id) {
+    public ResponseEntity<ArticleDTO> getArticleById(@PathVariable Long id) {
 
         Article article = articleRepository.findById(id).orElse(null);
         if (article == null) {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(article);
+        return ResponseEntity.ok(convertToDTO(article));
     }
 
     @GetMapping("/search-title")
@@ -79,7 +93,7 @@ public class ArticleController {
     // une méthode qui retourne les 5 derniers articles créés et classés du plus récent au plus ancien.
     @GetMapping("/search-last-article")
     public ResponseEntity<List<Article>> getFiveLastArticles() {
-        List<Article> articles = articleRepository.findTopFiveByOrderByCreatedAtDesc();
+        List<Article> articles = articleRepository.findTop5ByOrderByCreatedAtDesc();
         if (articles.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -87,7 +101,7 @@ public class ArticleController {
     }
 
     @PostMapping
-    public ResponseEntity<Article> createArticle(@RequestBody Article article) {
+    public ResponseEntity<ArticleDTO> createArticle(@RequestBody Article article) {
         article.setCreatedAt(LocalDateTime.now());
         article.setUpdatedAt(LocalDateTime.now());
 
@@ -100,11 +114,11 @@ public class ArticleController {
         }
 
         Article savedArticle = articleRepository.save(article);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedArticle);
+        return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(savedArticle));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Article> updateArticle(@PathVariable Long id, @RequestBody Article articleDetails) {
+    public ResponseEntity<ArticleDTO> updateArticle(@PathVariable Long id, @RequestBody Article articleDetails) {
 
         Article article = articleRepository.findById(id).orElse(null);
         if (article == null) {
@@ -124,7 +138,7 @@ public class ArticleController {
         }
 
         Article updatedArticle = articleRepository.save(article);
-        return ResponseEntity.ok(updatedArticle);
+        return ResponseEntity.ok(convertToDTO(updatedArticle));
 
     }
 
@@ -139,6 +153,7 @@ public class ArticleController {
         articleRepository.delete(article);
         return ResponseEntity.noContent().build();
     }
+
 
 
 }

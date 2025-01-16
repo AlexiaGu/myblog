@@ -16,5 +16,5 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
  List<Article> findByCreatedAtAfter(LocalDateTime createdAt);
 
  // méthode qui retourne les 5 derniers articles créés et classés du plus récent au plus ancien.
- List<Article> findTopFiveByOrderByCreatedAtDesc();
+ List<Article> findTop5ByOrderByCreatedAtDesc();
 }

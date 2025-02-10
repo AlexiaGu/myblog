@@ -1,5 +1,6 @@
 package org.wildcodeschool.myblog.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -16,9 +17,15 @@ import java.util.stream.Collectors;
 @RequestMapping("/categories")
 public class CategoryController {
 
+    // Propriétés
     private final CategoryRepository categoryRepository;
 
+    // Constructeur
+    public CategoryController(CategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
+    }
 
+    // Méthodes
     private CategoryDTO convertCategoryDTO(Category category) {
         CategoryDTO categoryDTO = new CategoryDTO();
         categoryDTO.setId(category.getId());
@@ -35,10 +42,6 @@ public class CategoryController {
             }).collect(Collectors.toList()));
         }
         return categoryDTO;
-    }
-
-    public CategoryController(CategoryRepository categoryRepository) {
-        this.categoryRepository = categoryRepository;
     }
 
     @GetMapping

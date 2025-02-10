@@ -11,6 +11,8 @@ public class ArticleDTO {
     private String categoryName;
     private List<String> imageUrls;
 
+    private List<AuthorDTO> authors;
+
     // Getters et setters
 
     public Long getId() {
@@ -60,6 +62,14 @@ public class ArticleDTO {
 
     public void setImageUrls(List<String> imageUrls) {
         this.imageUrls = imageUrls;
+    }
+
+    public List<AuthorDTO> getAuthors() {
+        return authors;
+    }
+
+    public void setAuthors(List<AuthorDTO> authors) {
+        this.authors = authors;
     }
 }
 

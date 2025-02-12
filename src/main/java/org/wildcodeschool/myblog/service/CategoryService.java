@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.wildcodeschool.myblog.dto.CategoryDTO;
+import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
 import org.wildcodeschool.myblog.mapper.CategoryMapper;
 import org.wildcodeschool.myblog.model.Category;
 import org.wildcodeschool.myblog.repository.CategoryRepository;
@@ -25,16 +26,14 @@ public class CategoryService {
     public List<CategoryDTO> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
         if (categories.isEmpty()) {
-            return null;
+            throw new ResourceNotFoundException("Aucune catégorie trouvée.");
         }
         return categories.stream().map(categoryMapper::convertToDTO).collect(Collectors.toList());
     }
 
     public CategoryDTO getCategoryById(@PathVariable Long id) {
-        Category category = categoryRepository.findById (id).orElse(null);
-        if (category == null) {
-            return null;
-        }
+        Category category = categoryRepository.findById (id)
+                .orElseThrow(() -> new ResourceNotFoundException("La catégorie correspondant à l'id " + id + " n'a pas été trouvé."));
         return categoryMapper.convertToDTO(category);
     }
 
@@ -44,7 +43,8 @@ public class CategoryService {
     }
 
     public CategoryDTO updateCategory(@PathVariable Long id, @RequestBody Category categoryDetails) {
-        Category category = categoryRepository.findById((id)).orElse(null);
+        Category category = categoryRepository.findById((id))
+                .orElseThrow(() -> new ResourceNotFoundException("La catégorie que vous voulez mettre à jour est introuvable."));
         if (category == null) {
             return null;
         }
@@ -54,7 +54,8 @@ public class CategoryService {
     }
 
     public boolean deleteCategory(@PathVariable Long id) {
-        Category category = categoryRepository.findById(id).orElse(null);
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("La catégorie que vous voulez supprimer est introuvable."));
         if (category == null) {
             return false;
         }

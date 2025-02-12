@@ -2,6 +2,7 @@ package org.wildcodeschool.myblog.service;
 
 import org.springframework.stereotype.Service;
 import org.wildcodeschool.myblog.dto.AuthorDTO;
+import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
 import org.wildcodeschool.myblog.mapper.AuthorMapper;
 import org.wildcodeschool.myblog.model.Author;
 import org.wildcodeschool.myblog.repository.ArticleAuthorRepository;
@@ -27,14 +28,15 @@ public class AuthorService {
 
     public List<AuthorDTO> getAllAuthors() {
         List<Author> authors = authorRepository.findAll();
+        if(authors.isEmpty()) {
+            throw new ResourceNotFoundException("Aucun auteur n'a été trouvé.");
+        }
         return authors.stream().map(authorMapper::convertToDTO).collect(Collectors.toList());
     }
 
     public AuthorDTO getAuthorById(Long id) {
-        Author author = authorRepository.findById(id).orElse(null);
-        if (author == null) {
-            return null;
-        }
+        Author author = authorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("L'auteur correspondant à votre recherche est introuvable."));;
         return authorMapper.convertToDTO(author);
     }
 
@@ -44,12 +46,8 @@ public class AuthorService {
     }
 
     public AuthorDTO updateAuthor(Long id, Author authorDetails) {
-        Author author = authorRepository.findById(id).orElse(null);
-        if (author == null) {
-            return null;
-        }
-        author.setFirstname(authorDetails.getFirstname());
-        author.setLastname(authorDetails.getLastname());
+        Author author = authorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("L'auteur que vous souhaitez mettre à jour est introuvable."));
         Author updatedAuthor = authorRepository.save(author);
         return authorMapper.convertToDTO(updatedAuthor);
     }
@@ -57,7 +55,7 @@ public class AuthorService {
     public boolean deleteAuthor(Long id) {
         Author author = authorRepository.findById(id).orElse(null);
         if (author == null) {
-            return false;
+            throw new ResourceNotFoundException("L'auteur que vous souhaitez supprimer n'a pas été trouvé.");
         }
 
         articleAuthorRepository.deleteAll(author.getArticleAuthors());

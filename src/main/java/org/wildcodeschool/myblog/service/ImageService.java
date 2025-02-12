@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.wildcodeschool.myblog.dto.ImageDTO;
+import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
 import org.wildcodeschool.myblog.mapper.ImageMapper;
 import org.wildcodeschool.myblog.model.Image;
 import org.wildcodeschool.myblog.repository.ImageRepository;
@@ -26,7 +27,7 @@ public class ImageService {
     public List<ImageDTO> getAllImages() {
         List<Image> images = imageRepository.findAll();
         if (images.isEmpty()) {
-            return null;
+            throw new ResourceNotFoundException("Aucune image n'a été trouvé.");
         }
         return images.stream()
                 .map(imageMapper::convertToDTO)
@@ -34,10 +35,8 @@ public class ImageService {
     }
 
     public ImageDTO getImageById(@PathVariable Long id) {
-        Image image = imageRepository.findById(id).orElse(null);
-        if (image == null) {
-            return null;
-        }
+        Image image = imageRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("L'image correspondant à l'id " + id + " n'existe pas."));
         return imageMapper.convertToDTO(image);
     }
 
@@ -48,20 +47,16 @@ public class ImageService {
 
     @PutMapping("/{id}")
     public ImageDTO updateImage(@PathVariable Long id, @RequestBody Image imageDetails) {
-        Image image = imageRepository.findById(id).orElse(null);
-        if (image == null) {
-            return null;
-        }
+        Image image = imageRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("L'image que vous voulez mettra à jour est introuvable."));
         image.setUrl(imageDetails.getUrl());
         Image updatedImage = imageRepository.save(image);
         return imageMapper.convertToDTO(updatedImage);
     }
 
     public boolean deleteImage(@PathVariable Long id) {
-        Image image = imageRepository.findById(id).orElse(null);
-        if (image == null) {
-            return false;
-        }
+        Image image = imageRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("L'image que vous voulez supprimer est introuvable."));
         imageRepository.delete(image);
         return true;
     }

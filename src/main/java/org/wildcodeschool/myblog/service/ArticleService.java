@@ -2,6 +2,7 @@ package org.wildcodeschool.myblog.service;
 
 import org.springframework.stereotype.Service;
 import org.wildcodeschool.myblog.dto.ArticleDTO;
+import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
 import org.wildcodeschool.myblog.mapper.ArticleMapper;
 import org.wildcodeschool.myblog.model.*;
 import org.wildcodeschool.myblog.repository.*;
@@ -37,14 +38,14 @@ public class ArticleService {
 
     public List<ArticleDTO> getAllArticles() {
         List<Article> articles = articleRepository.findAll();
+        if (articles.isEmpty()) {
+            throw new ResourceNotFoundException("Aucun article trouvé.");
+        }
         return articles.stream().map(articleMapper::convertToDTO).collect(Collectors.toList());
     }
 
     public ArticleDTO getArticleById(Long id) {
-        Article article = articleRepository.findById(id).orElse(null);
-        if (article == null) {
-            return null;
-        }
+        Article article = articleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("L'article avec l'id " + id + " n'a pas été trouvé"));
         return articleMapper.convertToDTO(article);
     }
 
@@ -54,7 +55,8 @@ public class ArticleService {
 
         // Gestion de la catégorie
         if (article.getCategory() != null) {
-            Category category = categoryRepository.findById(article.getCategory().getId()).orElse(null);
+            Category category = categoryRepository.findById(article.getCategory().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("La catégorie sélectionné est introuvable."));
             if (category == null) {
                 return null;
             }
@@ -151,7 +153,8 @@ public class ArticleService {
 
             for (ArticleAuthor articleAuthorDetails : articleDetails.getArticleAuthors()) {
                 Author author = articleAuthorDetails.getAuthor();
-                author = authorRepository.findById(author.getId()).orElse(null);
+                author = authorRepository.findById(author.getId())
+                        .orElseThrow(() -> new ResourceNotFoundException("L'auteur sélectionné est introuvable."));
                 if (author == null) {
                     return null;
                 }
@@ -176,7 +179,8 @@ public class ArticleService {
     }
 
     public boolean deleteArticle(Long id) {
-        Article article = articleRepository.findById(id).orElse(null);
+        Article article = articleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("L'article que vous souhaitez supprimé est introuvable."));
         if (article == null) {
             return false;
         }

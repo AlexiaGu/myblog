@@ -1,9 +1,11 @@
 package org.wildcodeschool.myblog.service;
 
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
-import org.wildcodeschool.myblog.dto.ArticleDTO;
+import org.wildcodeschool.myblog.dto.*;
 import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
 import org.wildcodeschool.myblog.mapper.ArticleMapper;
+import org.wildcodeschool.myblog.mapper.ImageMapper;
 import org.wildcodeschool.myblog.model.*;
 import org.wildcodeschool.myblog.repository.*;
 
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 public class ArticleService {
     private final ArticleRepository articleRepository;
     private final ArticleMapper articleMapper;
+    private final ImageMapper imageMapper;
     private final CategoryRepository categoryRepository;
     private final ImageRepository imageRepository;
     private final AuthorRepository authorRepository;
@@ -24,12 +27,14 @@ public class ArticleService {
     public ArticleService(
             ArticleRepository articleRepository,
             ArticleMapper articleMapper,
+            ImageMapper imageMapper,
             CategoryRepository categoryRepository,
             ImageRepository imageRepository,
             AuthorRepository authorRepository,
             ArticleAuthorRepository articleAuthorRepository) {
         this.articleRepository = articleRepository;
         this.articleMapper = articleMapper;
+        this.imageMapper = imageMapper;
         this.categoryRepository = categoryRepository;
         this.imageRepository = imageRepository;
         this.authorRepository = authorRepository;
@@ -49,7 +54,8 @@ public class ArticleService {
         return articleMapper.convertToDTO(article);
     }
 
-    public ArticleDTO createArticle(Article article) {
+    public ArticleDTO createArticle( ArticleCreateDTO articleCreateDTO) {
+        Article article = articleMapper.convertToEntity(articleCreateDTO);
         article.setCreatedAt(LocalDateTime.now());
         article.setUpdatedAt(LocalDateTime.now());
 
@@ -64,17 +70,18 @@ public class ArticleService {
         }
 
         // Gestion des images
-        if (article.getImages() != null && !article.getImages().isEmpty()) {
+        if (articleCreateDTO.getImages() != null && !article.getImages().isEmpty()) {
             List<Image> validImages = new ArrayList<>();
-            for (Image image : article.getImages()) {
-                if (image.getId() != null) {
-                    Image existingImage = imageRepository.findById(image.getId()).orElse(null);
+            for (ImageDTO imageDTO : articleCreateDTO.getImages()) {
+                if (imageDTO.getId() != null) {
+                    Image existingImage = imageRepository.findById(imageDTO.getId()).orElse(null);
                     if (existingImage != null) {
                         validImages.add(existingImage);
                     } else {
                         return null;
                     }
                 } else {
+                    Image image = imageMapper.convertToEntity(imageDTO);
                     Image savedImage = imageRepository.save(image);
                     validImages.add(savedImage);
                 }
@@ -85,17 +92,17 @@ public class ArticleService {
         Article savedArticle = articleRepository.save(article);
 
         // Gestion des auteurs
-        if (article.getArticleAuthors() != null) {
-            for (ArticleAuthor articleAuthor : article.getArticleAuthors()) {
-                Author author = articleAuthor.getAuthor();
-                author = authorRepository.findById(author.getId()).orElse(null);
+        if (articleCreateDTO.getAuthors() != null) {
+            for (AuthorContributionDTO articleAuthorDTO : articleCreateDTO.getAuthors()) {
+                Long authorId = articleAuthorDTO.getAuthorId();
+                Author author = authorRepository.findById(authorId).orElse(null);
                 if (author == null) {
                     return null;
                 }
-
+                ArticleAuthor articleAuthor = new ArticleAuthor();
                 articleAuthor.setAuthor(author);
                 articleAuthor.setArticle(savedArticle);
-                articleAuthor.setContribution(articleAuthor.getContribution());
+                articleAuthor.setContribution(articleAuthorDTO.getContribution());
 
                 articleAuthorRepository.save(articleAuthor);
             }

@@ -1,12 +1,17 @@
 package org.wildcodeschool.myblog.model;
 
 import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
-public class User {
+public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -17,8 +22,44 @@ public class User {
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> roles = new HashSet<>();
 
-    // getters and setters
+    // La méthode getAuthorities() retourne une collection de GrantedAuthority, qui représente les rôles de l'utilisateur.
+    // Elle transforme chaque rôle en une SimpleGrantedAuthority, un objet que Spring Security utilise pour vérifier les autorisations.
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return roles.stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toSet());
+    }
 
+// l'email est ici utilisé comme nom d'utilisateur (username)
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    // Les méthodes suivantes permettent de contrôller l'état du compte utilisteur.
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
+    // getters and setters
 
     public String getPassword() {
         return password;
